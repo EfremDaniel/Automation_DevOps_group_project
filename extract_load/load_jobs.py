@@ -1,52 +1,64 @@
+#========================================#
+#                                        #
+#    This script loads job ads with      #
+#    certain occupation fields and       #
+#    use pagination to load more job     #
+#    ads.                                #
+#                                        #
+#========================================#
+ 
  
 import dlt
 import requests
 import json
-import os
 from pathlib import Path
+import os
  
-dlt.config["load.truncate_staging_dataset"] = True
  
 def _get_ads(url_for_search, params):
     headers = {"accept": "application/json"}
     response = requests.get(url_for_search, headers=headers, params=params)
-    response.raise_for_status()
+    response.raise_for_status()  # check for http errors
     return json.loads(response.content.decode("utf8"))
  
  
-@dlt.resource(table_name= 'raw_jobs', write_disposition="append")
-def jobsearch_resource(param):
+@dlt.resource(write_disposition="append")
+def jobsearch_resource(params):
     """
     params should include at least:
       - "q": your query
       - "limit": page size (e.g. 100)
-      - "occupation-field": the occupation field concept ID
     """
     url = "https://jobsearch.api.jobtechdev.se"
     url_for_search = f"{url}/search"
-    limit = param.get("limit", 100)
+    limit = params.get("limit", 100)
     offset = 0
  
     while True:
-        page_params = dict(param, offset=offset)
+        # build this page’s params
+        page_params = dict(params, offset=offset)
         data = _get_ads(url_for_search, page_params)
  
         hits = data.get("hits", [])
         if not hits:
+            # no more results
             break
-       
+ 
+        # yield each ad on this page
         for ad in hits:
             yield ad
  
+        # if fewer than a full page was returned, we’re done
         if len(hits) < limit or offset > 1900:
             break
-       
+ 
         offset += limit
+ 
  
 def run_pipeline(query, table_name, occupation_fields):
     pipeline = dlt.pipeline(
-        pipeline_name="jobads_demo",
-        destination=dlt.destinations.duckdb(path="data_warehouse/job_ads.duckdb"),
+        pipeline_name="jobads_demo_v2",
+        destination=dlt.destinations.duckdb("../data_warehouse/jobads.duckdb"),
         dataset_name="staging",
     )
  
@@ -64,19 +76,10 @@ if __name__ == "__main__":
     os.chdir(working_directory)
  
     query = ""
-    table_name = "job_ads"
+    table_name = "raw_jobs"
  
     # Teknisk inriktning, "Hälso sjukvård", "Pedagogik"
-    params = [{
-            "limit": 100, "occupation-field": "X82t_awd_Qyc" #Administration, ekonomi, juridik
-        },
-        {
-            "limit": 100, "occupation-field": "j7Cq_ZJe_GkT" #Bygg och anläggning
-        },
-        {
-            "limit": 100, "occupation-field": "apaJ_2ja_LuF" #Data/IT
-        }
-    ]
+    occupation_fields = ("X82t_awd_Qyc", "j7Cq_ZJe_GkT", "apaJ_2ja_LuF")
  
-    run_pipeline(query, table_name, params)
+    run_pipeline(query, table_name, occupation_fields)
  
