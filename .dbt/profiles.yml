@@ -1,0 +1,6 @@
+dbt_devops:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "../data_warehouse/job_ads.duckdb"

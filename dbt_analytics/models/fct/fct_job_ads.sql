@@ -1,0 +1,15 @@
+-- this is an extract of the model
+
+with job_ads as (select * from {{ ref('src_job_ads') }})
+
+select
+    id as job_description_id,
+    max({{ dbt_utils.generate_surrogate_key(['experience_required', 'access_to_own_car', 'driving_license_required'])}}) as auxilliary_id,
+    max({{ dbt_utils.generate_surrogate_key(['employer_name', 'workplace_region'])}}) as employer_id,
+    max({{ dbt_utils.generate_surrogate_key(['employment_type', 'salary_type', 'duration', 'scope_of_work_min', 'scope_of_work_max'])}}) as job_details_id,
+    max({{ dbt_utils.generate_surrogate_key(['occupation']) }}) as occupation_id,
+    max(vacancies) as vacancies,
+    max(relevance) as relevance,
+    max(application_deadline) as application_deadline
+from job_ads
+group by job_description_id
