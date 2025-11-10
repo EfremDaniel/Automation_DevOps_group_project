@@ -46,7 +46,7 @@ def jobsearch_resource(param):
 def run_pipeline(query, table_name, occupation_fields):
     pipeline = dlt.pipeline(
         pipeline_name="jobads_demo",
-        destination=dlt.destinations.duckdb(path="data_warehouse/jobads.duckdb"),
+        destination=dlt.destinations.duckdb(path="data_warehouse/job_ads.duckdb"),
         dataset_name="staging",
     )
  
