@@ -5,6 +5,7 @@ import os
 
 DB_PATH = os.getenv("DUCKDB_PATH")
 
+
 def query_job_listings(query='SELECT * FROM marts.mart_construction'):
     with duckdb.connect(DB_PATH, read_only=True) as conn:
         df = conn.query(query).df()
