@@ -1,0 +1,45 @@
+name: DLT Pipeline
+
+on:
+  workflow_run:
+    workflows: ["Python CI"]
+    types:
+      - completed
+jobs:
+  dlt_job:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "DLT körs eftersom testerna lyckades"
+    
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt || true
+          pip install dlt
+      
+      - name: Run DLT pipeline
+        run: |
+          python your_dlt_script.py || echo "DLT pipeline failed"
+
+      - name: Run DLT pipeline
+        run: |
+          python your_dlt_script.py > dlt_output.txt 2>&1 || echo "failed" > dlt_status.txt"
+
+      - name: Upload DLT logs if failed
+        if: ${{ hashFiles('dlt_status.txt') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: dlt-logs
+          path: dlt_output.txt
+
+      
+
