@@ -35,13 +35,13 @@ default:
     dev:
       type: duckdb
       path: ":memory:"
-YAML
+ YAML
 
       - name: Run dbt pipeline with logging
         run: |
-          dbt debug  --profiles-dir ~/.dbt  > dbt_output.txt 2>&1 || echo "failed" > dbt_status.txt
-          dbt deps   --profiles-dir ~/.dbt >> dbt_output.txt 2>&1 || echo "failed" >> dbt_status.txt
-          dbt build  --profiles-dir ~/.dbt >> dbt_output.txt 2>&1 || echo "failed" >> dbt_status.txt
+          dbt debug --profiles-dir ~/.dbt  > dbt_output.txt 2>&1 || echo "failed" > dbt_status.txt
+          dbt deps  --profiles-dir ~/.dbt >> dbt_output.txt 2>&1 || echo "failed" >> dbt_status.txt
+          dbt build --profiles-dir ~/.dbt >> dbt_output.txt 2>&1 || echo "failed" >> dbt_status.txt
 
       - name: Upload dbt logs if failed
         if: ${{ hashFiles('dbt_status.txt') != '' }}
@@ -49,3 +49,4 @@ YAML
         with:
           name: dbt-logs
           path: dbt_output.txt
+
