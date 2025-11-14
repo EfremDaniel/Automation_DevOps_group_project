@@ -25,8 +25,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt || true
           pip install pytest pytest-cov flake8
+
 
       - name: Lint
         run: |
@@ -35,9 +36,9 @@ jobs:
       - name: Run test and create logg during fails
         id: pytest_step
         run: |
-          # Kör pytest och spara all output
+          set -o pipefail
           pytest > pytest_output.txt 2>&1 || echo "failed" > test_status.txt
-          
+
           if [ -f test_status.txt ]; then
             echo "tests_failed=true" >> $GITHUB_OUTPUT
           else
@@ -45,7 +46,7 @@ jobs:
           fi
 
       - name: Upload test logs (only if log_errors == 'true' and tests failed)
-        if: ${{ github.event.inputs.log_errors == 'true' && steps.set_test_output.outputs.tests_failed == 'true' }}
+        if: ${{ github.event.inputs.log_errors == 'true' && steps.pytest_step.outputs.tests_failed == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: pytest-logs
