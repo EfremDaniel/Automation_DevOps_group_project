@@ -26,6 +26,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt || true
           pip install dbt-core dbt-duckdb
+      
+      - name: Write profiles.yml from secret
+        run: |
+          mkdir -p ~/.dbt
+          echo "$DBT_PROFILES_CONTENT" > ~/.dbt/profiles.yml
+          chmod 600 ~/.dbt/profiles.yml
+        env:
+          DBT_PROFILES_CONTENT: ${{ secrets.DBT_PROFILES_CONTENT }}
 
       - name: Run dbt pipeline
         run: |
