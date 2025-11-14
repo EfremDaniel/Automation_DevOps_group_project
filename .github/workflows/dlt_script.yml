@@ -32,7 +32,7 @@ jobs:
 
       - name: Run DLT pipeline
         run: |
-          python your_dlt_script.py > dlt_output.txt 2>&1 || echo "failed" > dlt_status.txt"
+          python your_dlt_script.py > dlt_output.txt 2>&1 || echo "failed" > dlt_status.txt
 
       - name: Upload DLT logs if failed
         if: ${{ hashFiles('dlt_status.txt') != '' }}
