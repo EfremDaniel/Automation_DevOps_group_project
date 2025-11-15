@@ -25,28 +25,27 @@ jobs:
           python -m pip install --upgrade pip
           pip install dbt-core dbt-duckdb
 
-      - name: Write minimal CI profiles.yml
+      # --- Write profiles.yml from Secret (your profile) ---
+      - name: Write profiles.yml from secret
         run: |
           mkdir -p ~/.dbt
-          cat > ~/.dbt/profiles.yml <<'YAML'
-default:
-  target: dev
-  outputs:
-    dev:
-      type: duckdb
-      path: ":memory:"
- YAML
+          printf "%s" "$DBT_PROFILES_CONTENT" > ~/.dbt/profiles.yml
+        env:
+          DBT_PROFILES_CONTENT: ${{ secrets.DBT_PROFILES_CONTENT }}
 
+      # --- Run dbt with logging ---
       - name: Run dbt pipeline with logging
         run: |
           dbt debug --profiles-dir ~/.dbt  > dbt_output.txt 2>&1 || echo "failed" > dbt_status.txt
           dbt deps  --profiles-dir ~/.dbt >> dbt_output.txt 2>&1 || echo "failed" >> dbt_status.txt
           dbt build --profiles-dir ~/.dbt >> dbt_output.txt 2>&1 || echo "failed" >> dbt_status.txt
 
+      # --- Upload logs only if dbt failed ---
       - name: Upload dbt logs if failed
         if: ${{ hashFiles('dbt_status.txt') != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: dbt-logs
           path: dbt_output.txt
+
 
