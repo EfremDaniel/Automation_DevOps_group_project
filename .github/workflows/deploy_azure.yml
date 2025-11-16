@@ -13,8 +13,6 @@ env:
   AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
   AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
 
-permissions:
-  contents: read
 
 jobs:
   deploy:
@@ -25,6 +23,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Debug secrets used
+        run: |
+          echo "WEBAPP_NAME=${{ env.AZURE_WEBAPP_NAME }}"
+          echo "RESOURCE_GROUP=${{ env.AZURE_RESOURCE_GROUP }}"
 
       - name: Azure Login
         uses: azure/login@v1
