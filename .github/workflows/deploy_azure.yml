@@ -34,6 +34,10 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - name: Debug Azure account inside Actions
+        run: |
+          az account show --output json
 
       - name: Configure Azure Web App to use Docker image and restart
         uses: azure/cli@v1
