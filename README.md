@@ -1,57 +1,54 @@
-Automation DevOps Pipeline – Examination
+# Individuell Rapport – CI/CD Pipeline
 
-Detta projekt demonstrerar en fullständig CI/CD-pipeline byggd med GitHub Actions, Docker, DockerHub, Azure Web App for Containers, samt pytest, dlt och dbt.
-Projektet uppfyller samtliga krav i kursens examinationsuppgift och implementerar ett komplett DevOps-flöde från kod → test → build → datahantering → visualisering → deployment.
+## 1. Beskrivning av min pipeline
 
-1. Översikt
+Min pipeline är uppdelad i flera separata workflows i GitHub Actions. Syftet är att automatisera testning, datasteg, container-bygge och distribution till Azure. Varje workflow har ett tydligt ansvar och workflows kopplas ihop med `workflow_run` för att skapa ett sekventiellt flöde där nästa steg endast körs när föregående lyckats.
 
-Projektet består av fem separata pipelines som körs i en kedja:
+### **Python CI (testning och kodvalidering)**
+Detta workflow körs vid push eller manuellt. Det innehåller:
+- Installation av Python och beroenden  
+- Linting med flake8  
+- Testkörning med pytest  
+- Villkorlig uppladdning av loggar vid fel  
+- Sättning av en output-variabel som anger om testerna passerade
 
-Python CI
-Kör lint + pytest + artefaktloggning (villkorlig).
-Startar automatiskt vid push till utvecklingsbranchen.
+Detta säkerställer kvalitet tidigt i kedjan.
 
-DLT Pipeline
-Körs automatiskt när Python CI lyckas.
-Extraherar / transformeras data med dlt.
+### **DLT Pipeline**
+Workflowet kör dataladdning eller transformation. Det används för att validera datasteg innan modellering och distribution sker. Vid fel laddas loggar upp.
 
-dbt Pipeline
-Körs när DLT Pipeline lyckas.
-Bygger datamodeller i dbt.
+### **DBT Pipeline**
+Körs endast om DLT Pipeline lyckas. Steg:
+- Installation av dbt-core och duckdb  
+- Injektering av `profiles.yml` via GitHub Secrets  
+- dbt debug, deps och build  
+- Loggar laddas upp vid fel
 
-Build docker image
-Körs när dbt Pipeline lyckas.
-Bygger och pushar Docker-imaget (sha-tag + latest) till DockerHub.
+Detta validerar datamodellerna och säkerställer struktur innan applikationen byggs.
 
-Deploy to Azure Web App (Docker Native)
-Körs när Build docker image lyckas.
-Konfigurerar Azure App Service att köra senaste Docker-imagen.
+### **Docker Build Workflow**
+Körs när DBT Pipeline är klar. Steg:
+- Docker login (Docker Hub)  
+- Bygge av image med både `latest` och commit-SHA-tag  
+- Push av båda taggarna
 
-Varje pipeline använder workflow_run för att skapa beroenden mellan workflows.
+Syftet är att skapa en reproducerbar container per commit och en stabil latest-version.
 
-2. Mappstruktur
-.
-├── app/
-│   ├── logic.py              # Enkel logikmodul för unit testing
-│   └── __init__.py
-│
-├── dashboard/
-│   └── dashboard.py          # Streamlit dashboard
-│
-├── data_warehouse/
-│   └── job_ads.duckdb        # DuckDB-fil
-│
-├── tests/
-│   ├── test_logic.py
-│   ├── test_string_utils.py
-│   └── test_repo_smoke.py
-│
-├── Dockerfile
-├── requirements.txt
-└── .github/
-    └── workflows/
-        ├── python-ci.yml
-        ├── dlt-pipeline.yml
-        ├── dbt-pipeline.yml
-        ├── build-docker-image.yml
-        └── deploy.yml
+### **Deploy Workflow (Azure Web App – Docker)**
+Det sista workflowet deployar containerimagen till Azure. Det innefattar:
+- Inloggning i Azure med service principal  
+- Uppdatering av App Service att använda rätt Docker-image  
+- Eventuell uppdatering av PORT/app settings  
+- Omdirigering av trafik genom restart
+
+Detta workflow representerar CD-steget i pipelinen.
+
+---
+
+## 1.b Motivering av designval
+
+### **Separata workflows**
+Jag delade upp pipelinen i flera workflows för att följa principer om moduläritet, spårbarhet och stabilitet. Ett fel i t.ex. teststeget ska inte leda till onödig körning av bygg- eller deploysteg. Varje workflow kan felsökas individuellt.
+
+### **Användning av `workflow_run`**
+Jag använde `workflow_run` för att bygga en kedja:
