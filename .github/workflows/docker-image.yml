@@ -5,14 +5,16 @@ on:
     workflows: ["dbt Pipeline"]
     types:
       - completed
-  workflow_dispatch:   # <-- LITEN FIX: gör att Build får nytt workflow_run-event efter completion
+  workflow_dispatch:   # tillåter manuell körning
+  push:
+    branches:
+      - main             # MINSTA ÄNDRING: gör att Build skapar workflow_run-event vid normal push
 
 jobs:
   build_deploy:
     name: Build and push image
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -38,6 +40,7 @@ jobs:
 
       - name: Push Docker image (latest)
         run: docker push "$IMAGE_LATEST"
+
 
 
 
