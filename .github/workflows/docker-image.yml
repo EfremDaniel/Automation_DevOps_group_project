@@ -2,13 +2,17 @@ name: Build docker image
 
 on:
   workflow_run:
-    workflows: ["dbt Pipeline"]
+    workflows:
+      - "dbt Pipeline"
     types:
       - completed
-  workflow_dispatch:   # tillåter manuell körning
+
   push:
     branches:
-      - main             # MINSTA ÄNDRING: gör att Build skapar workflow_run-event vid normal push
+      - main
+
+  workflow_dispatch:
+
 
 jobs:
   build_deploy:
