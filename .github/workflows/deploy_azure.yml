@@ -2,14 +2,14 @@ name: Deploy Docker image to Azure Web App
 
 on:
   workflow_run:
-    workflows: ["dbt Pipeline"]
+    workflows:
+      - "Build docker image"
     types:
       - completed
-
-  workflow_dispatch:    
-  push:
-    branches:
-      - main           
+  repository_dispatch:
+    types:
+      - run-deploy
+  workflow_dispatch: {}
 
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/myapp:latest
@@ -20,20 +20,25 @@ jobs:
   deploy:
     name: Deploy to Azure Web App (container)
     runs-on: ubuntu-latest
-
-    if: ${{ 
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
-      github.event_name == 'workflow_dispatch'
-    }}
+    if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || github.event_name == 'workflow_dispatch' || github.event_name == 'repository_dispatch' }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Debug secrets used
+        run: |
+          echo "WEBAPP_NAME=${{ env.AZURE_WEBAPP_NAME }}"
+          echo "RESOURCE_GROUP=${{ env.AZURE_RESOURCE_GROUP }}"
+
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Debug Azure account inside Actions
+        run: |
+          az account show --output json
 
       - name: Configure Azure Web App to use Docker image and restart
         uses: azure/cli@v1
