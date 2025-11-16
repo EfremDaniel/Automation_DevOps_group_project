@@ -6,30 +6,24 @@ on:
       - "Build docker image"
     types:
       - completed
-
-  # Fallback trigger from Build-workflow
   repository_dispatch:
-    types: [run-deploy]
-
-  # Keep manual trigger
-  workflow_dispatch:
+    types:
+      - run-deploy
+  workflow_dispatch: {}
 
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/myapp:latest
   AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
   AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
 
+permissions:
+  contents: read
 
 jobs:
   deploy:
     name: Deploy to Azure Web App (container)
     runs-on: ubuntu-latest
-
-    if: ${{ 
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') 
-      || github.event_name == 'workflow_dispatch'
-      || github.event_name == 'repository_dispatch'
-    }}
+    if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || github.event_name == 'workflow_dispatch' || github.event_name == 'repository_dispatch' }}
 
     steps:
       - name: Checkout repository
@@ -61,6 +55,10 @@ jobs:
               --docker-registry-server-user ${{ secrets.DOCKERHUB_USERNAME }} \
               --docker-registry-server-password ${{ secrets.DOCKERHUB_TOKEN }}
             az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
+
+      - name: Deployment complete
+        run: echo "Deployment finished successfully."
+
 
       - name: Deployment complete
         run: echo "Deployment finished successfully."
