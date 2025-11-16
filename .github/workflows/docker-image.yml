@@ -38,14 +38,6 @@ jobs:
       - name: Push Docker image (latest)
         run: |
           docker push "$IMAGE_LATEST"
-          
-      - name: Trigger deploy workflow (repo dispatch)
-        if: ${{ success() }}
-        uses: peter-evans/repository-dispatch@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          event-type: run-deploy
-
 
 
 
