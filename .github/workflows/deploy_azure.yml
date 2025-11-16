@@ -6,7 +6,7 @@ on:
       - "Build docker image"
     types:
       - completed
-  workflow_dispatch: {}
+  workflow_dispatch: {}   # behåll manuell trigger
 
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/myapp:latest
@@ -20,7 +20,11 @@ jobs:
   deploy:
     name: Deploy to Azure Web App (container)
     runs-on: ubuntu-latest
-    if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || github.event_name == 'workflow_dispatch' }}
+
+    if: ${{ 
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      github.event_name == 'workflow_dispatch'
+    }}
 
     steps:
       - name: Checkout repository
