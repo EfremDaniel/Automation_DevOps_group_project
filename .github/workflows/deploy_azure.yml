@@ -5,7 +5,6 @@ on:
     workflows: ["Build docker image"]
     types:
       - completed
-  workflow_dispatch: {}
 
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/myapp:latest
