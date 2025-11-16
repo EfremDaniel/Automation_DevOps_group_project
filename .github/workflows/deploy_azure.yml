@@ -1,4 +1,4 @@
-name: Deploy Docker image to Azure Web App 
+name: Deploy Docker image to Azure Web App
 
 on:
   workflow_run:
@@ -18,28 +18,31 @@ jobs:
     name: Deploy to Azure Web App (container)
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-     
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
 
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-   
-    - name: Configure Azure Web App to use Docker image and restart
-      uses: azure/cli@v1
-      with:
-        inlineScript: |
-          az webapp config container set \
-            --name ${{ env.AZURE_WEBAPP_NAME }} \
-            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-            --docker-custom-image-name ${{ env.DOCKER_IMAGE }} \
-            --docker-registry-server-url https://index.docker.io \
-            --docker-registry-server-user ${{ secrets.DOCKERHUB_USERNAME }} \
-            --docker-registry-server-password ${{ secrets.DOCKERHUB_TOKEN }}
-              az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
-    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Configure Azure Web App to use Docker image and restart
+        uses: azure/cli@v1
+        with:
+          inlineScript: |
+            az webapp config container set \
+              --name ${{ env.AZURE_WEBAPP_NAME }} \
+              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+              --docker-custom-image-name ${{ env.DOCKER_IMAGE }} \
+              --docker-registry-server-url https://index.docker.io \
+              --docker-registry-server-user ${{ secrets.DOCKERHUB_USERNAME }} \
+              --docker-registry-server-password ${{ secrets.DOCKERHUB_TOKEN }}
+            az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
+
+      - name: Deployment complete
+        run: echo "Deployment finished successfully."
+
     - name: Deployment complete
       run: echo "Deployment finished successfully." 
