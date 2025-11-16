@@ -3,16 +3,14 @@ name: Deploy Docker image to Azure Web App
 on:
   workflow_run:
     workflows: ["Build docker image"]
-    types: ["completed"]
+    types:
+      - completed
   workflow_dispatch:
 
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/myapp:latest
   AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
   AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
-
-permissions:
-  contents: read
 
 jobs:
   deploy:
@@ -45,5 +43,3 @@ jobs:
       - name: Deployment complete
         run: echo "Deployment finished successfully."
 
-    - name: Deployment complete
-      run: echo "Deployment finished successfully." 
