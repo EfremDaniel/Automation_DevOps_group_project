@@ -27,7 +27,7 @@ jobs:
           echo "IMAGE_SHA=${{ secrets.DOCKERHUB_USERNAME }}/myapp:${{ github.sha }}" >> $GITHUB_ENV
           echo "IMAGE_LATEST=${{ secrets.DOCKERHUB_USERNAME }}/myapp:latest" >> $GITHUB_ENV
 
-      - name: Build Docker image (sha + latest)
+      - name: Build Docker image 
         run: |
           docker build -t "$IMAGE_SHA" -t "$IMAGE_LATEST" .
 
@@ -38,6 +38,7 @@ jobs:
       - name: Push Docker image (latest)
         run: |
           docker push "$IMAGE_LATEST"
+
 
 
 
