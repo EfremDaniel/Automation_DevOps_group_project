@@ -19,8 +19,6 @@ env:
   AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
   AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
 
-permissions:
-  contents: read
 
 jobs:
   deploy:
