@@ -6,7 +6,7 @@ on:
       - "dbt Pipeline"
     types:
       - completed
-  workflow_dispatch: {}
+
 
 env:
   IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/myapp
@@ -52,6 +52,10 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Set Azure subscription
+        run: |
+          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Configure Azure Web App container
         uses: azure/cli@v1
         with:
@@ -70,3 +74,4 @@ jobs:
 
       - name: Deployment complete
         run: echo "Deployment completed successfully"
+
