@@ -6,7 +6,7 @@ on:
       - "dbt Pipeline"
     types:
       - completed
-
+  workflow_dispatch: {}
 
 env:
   IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/myapp
@@ -33,45 +33,4 @@ jobs:
         run: |
           docker build \
             -t $IMAGE_NAME:latest \
-            -t $IMAGE_NAME:${{ github.sha }} \
-            .
-
-      - name: Push Docker image
-        run: |
-          docker push $IMAGE_NAME:latest
-          docker push $IMAGE_NAME:${{ github.sha }}
-
-  deploy:
-    name: Deploy to Azure Web App
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Set Azure subscription
-        run: |
-          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Configure Azure Web App container
-        uses: azure/cli@v1
-        with:
-          inlineScript: |
-            az webapp config container set \
-              --name $AZURE_WEBAPP_NAME \
-              --resource-group $AZURE_RESOURCE_GROUP \
-              --docker-custom-image-name $IMAGE_NAME:latest \
-              --docker-registry-server-url https://index.docker.io \
-              --docker-registry-server-user ${{ secrets.DOCKERHUB_USERNAME }} \
-              --docker-registry-server-password ${{ secrets.DOCKERHUB_TOKEN }}
-
-            az webapp restart \
-              --name $AZURE_WEBAPP_NAME \
-              --resource-group $AZURE_RESOURCE_GROUP
-
-      - name: Deployment complete
-        run: echo "Deployment completed successfully"
 
