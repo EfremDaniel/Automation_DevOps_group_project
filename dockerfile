@@ -11,4 +11,4 @@ RUN pip install --no-cache-dir streamlit duckdb pandas
 
 EXPOSE 8501
 
-CMD ["streamlit", "run", "dashboard.py", "--server.port=$PORT", "--server.address=0.0.0.0"]
+CMD streamlit run dashboard.py --server.port=$PORT --server.address=0.0.0.0
