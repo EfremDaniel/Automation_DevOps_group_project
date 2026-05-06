@@ -160,9 +160,8 @@ jobs:
         id: docker_build
         run: |
           docker build \
-            -t antonbackeus/hranalyticsdashboard:latest \
-            -t antonbackeus/hranalyticsdashboard:1.${{ github.run_number }} \
-            . > docker_build.log 2>&1
+            -t DITT_DOCKERHUB_USERNAME/Automation_DevOps_group_project:latest \
+            -t DITT_DOCKERHUB_USERNAME/Automation_DevOps_group_project.${{ github.run_number }}
   
       - name: Test Docker image
         id: docker_test
