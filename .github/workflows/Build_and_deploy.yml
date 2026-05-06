@@ -124,7 +124,7 @@ jobs:
 
       - name: Run DuckDB validation
         id: validate_db
-        run: python validation/duckdb_validation.py > duckdb_validation.log 2>&1
+        run: python validation/duckdb_validation.py
 
       - name: Upload DuckDB validation logs
         if: failure() && github.event.inputs.enable_logging == 'true'
