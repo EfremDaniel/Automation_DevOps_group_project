@@ -46,7 +46,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: duckdb-database-dlt
-          path: ../data_warehouse/job_ads.duckdb
+          path: ./data_warehouse/job_ads.duckdb
           
   run-dbt:
     needs: run-dlt
@@ -97,7 +97,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: duckdb-database-dbt
-          path: ../data_warehouse/job_ads.duckdb
+          path: ./data_warehouse/job_ads.duckdb
 
   validate-db:
     needs: run-dbt
