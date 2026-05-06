@@ -105,8 +105,8 @@ def validate_tables(con, schema_name: str, objects: dict, object_type="table"):
 
 
 def run_validations(con):
-    ok_warehouse = validate_tables(con, "warehouse", warehouse, object_type="table")
-    ok_marts = validate_tables(con, "marts", marts, object_type="view")
+    ok_warehouse = validate_tables(con, "main", warehouse, object_type="table")
+    ok_marts = validate_tables(con, "main", marts, object_type="view")
 
     if not (ok_warehouse and ok_marts):
         print("DuckDB validation FAILED.")
