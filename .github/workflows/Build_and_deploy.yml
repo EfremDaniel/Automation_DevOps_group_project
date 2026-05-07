@@ -172,8 +172,8 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            -t efrem27/Automation_DevOps_group_project:latest \
-            -t efrem27/Automation_DevOps_group_project:1.${{ github.run_number }} \
+            -t efrem27/automation_devops_group_project:latest \
+            -t efrem27/automation_devops_group_project:${{ github.run_number }} \
             .
 
       - name: Test Docker image
