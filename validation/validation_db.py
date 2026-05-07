@@ -123,5 +123,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     con = duckdb.connect(DB_PATH)
+    print(con.execute("SHOW TABLES").fetchall())
+    print(con.execute("SELECT table_schema, table_name FROM information_schema.tables").fetchall())
     run_validations(con)
     con.close()
