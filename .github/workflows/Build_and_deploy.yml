@@ -148,7 +148,7 @@ jobs:
           path: duckdb_validation.log
 
 
-  build-and-push:
+  build-and-push: 
     needs: validate-db
     runs-on: ubuntu-latest
 
