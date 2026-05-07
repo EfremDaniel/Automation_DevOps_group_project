@@ -89,9 +89,6 @@ jobs:
 
           con = duckdb.connect("../data_warehouse/job_ads.duckdb")
 
-          print("SCHEMAS:")
-          print(con.execute("SHOW SCHEMAS").fetchall())
-
           print("TABLES:")
           print(con.execute("SHOW TABLES").fetchall())
 
