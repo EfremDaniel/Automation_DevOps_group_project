@@ -79,7 +79,7 @@ jobs:
 
       - name: Run dbt models
         working-directory: ./dbt_analytics
-        run: dbt run
+        run: dbt run --debug
 
       - name: Debug DuckDB tables
         working-directory: ./dbt_analytics
