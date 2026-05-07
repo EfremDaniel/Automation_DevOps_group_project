@@ -13,6 +13,7 @@ on:
         default: "true"
 
 jobs:
+
   run-dlt:
     runs-on: ubuntu-latest
 
@@ -33,7 +34,7 @@ jobs:
       - name: Run dlt pipeline
         run: |
           python extract_load/load_jobs.py > dlt_error.log 2>&1
-    
+
       - name: Upload dlt error log
         if: failure() && github.event.inputs.enable_logging == 'true'
         uses: actions/upload-artifact@v4
@@ -47,7 +48,8 @@ jobs:
         with:
           name: duckdb-database-dlt
           path: ./data_warehouse/job_ads.duckdb
-          
+
+
   run-dbt:
     needs: run-dlt
     runs-on: ubuntu-latest
@@ -55,55 +57,52 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Download DuckDB database artifact
         uses: actions/download-artifact@v4
         with:
           name: duckdb-database-dlt
-          path: ./data_warehouse 
-        
+          path: ./data_warehouse
+
+      - name: Create profiles.yml
+        run: |
+          mkdir -p ~/.dbt
+          cat <<EOF > ~/.dbt/profiles.yml
+          dbt_devops:
+            target: dev
+            outputs:
+              dev:
+                type: duckdb
+                path: ../data_warehouse/job_ads.duckdb
+                threads: 4
+          EOF
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-        
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Create dbt profiles.yml
-        run: |
-          mkdir -p ~/.dbt
-          echo "${{ secrets.PROFILES_YML }}" > ~/.dbt/profiles.yml
-
       - name: Run dbt models
         working-directory: ./dbt_analytics
-        run: dbt run --debug
-
-      - name: Debug DuckDB tables
-        working-directory: ./dbt_analytics
         run: |
-          python - <<EOF
-          import duckdb
-
-          con = duckdb.connect("../data_warehouse/job_ads.duckdb")
-
-          print("TABLES:")
-          print(con.execute("SHOW TABLES").fetchall())
-
-          EOF
+          dbt run
 
       - name: Run dbt tests
         working-directory: ./dbt_analytics
-        run: dbt test
+        run: |
+          dbt test
 
       - name: Upload dbt logs on failure
         if: failure() && github.event.inputs.enable_logging == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: dbt-error-logs
-          path: ./dbt_analytics/*.log
+          path: ./dbt_analytics/logs
 
       - name: Upload DuckDB database as artifact
         if: success()
@@ -111,6 +110,7 @@ jobs:
         with:
           name: duckdb-database-dbt
           path: ./data_warehouse/job_ads.duckdb
+
 
   validate-db:
     needs: run-dbt
@@ -137,7 +137,8 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run DuckDB validation
-        run: python validation/validation_db.py
+        run: |
+          python validation/validation_db.py
 
       - name: Upload DuckDB validation logs
         if: failure() && github.event.inputs.enable_logging == 'true'
@@ -146,29 +147,30 @@ jobs:
           name: duckdb-validation-error-logs
           path: duckdb_validation.log
 
+
   build-and-push:
     needs: validate-db
     runs-on: ubuntu-latest
-  
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-  
+
       - name: Download DuckDB database artifact
         uses: actions/download-artifact@v4
         with:
           name: duckdb-database-dbt
           path: ./data_warehouse
-  
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-  
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-  
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Build Docker image
         run: |
           docker build \
@@ -178,21 +180,38 @@ jobs:
 
       - name: Test Docker image
         run: |
-          docker run -d -p 8501:8501 --name test_app efrem27/Automation_DevOps_group_project:latest
-          sleep 10
-          curl --fail http://localhost:8501 || exit 1
+          docker run -d -p 8501:8501 --name test_app efrem27/automation_devops_group_project:latest
+
+          for i in {1..10}; do
+            echo "Checking if Streamlit server is up (attempt $i)..."
+
+            if curl --fail http://localhost:8501 2>/dev/null; then
+              echo "Streamlit server is running!"
+              break
+            fi
+
+            sleep 3
+          done
+
+          if ! curl --fail http://localhost:8501 2>/dev/null; then
+            echo "ERROR: Streamlit app did not start correctly"
+            docker logs test_app > docker_test_error.log 2>&1
+            docker stop test_app
+            exit 1
+          fi
+
           docker stop test_app
-  
+
       - name: Push Docker image
         if: success()
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile
+          file: ./dockerfile
           push: true
           tags: |
-            efrem27/Automation_DevOps_group_project:latest
-            efrem27/Automation_DevOps_group_project:1.${{ github.run_number }}
+            efrem27/automation_devops_group_project:latest
+            efrem27/automation_devops_group_project:${{ github.run_number }}
 
       - name: Upload Docker build logs
         if: failure() && github.event.inputs.enable_logging == 'true'
@@ -206,4 +225,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: docker-test-error-logs
-          path: docker_test_error.log 
+          path: docker_test_error.log
